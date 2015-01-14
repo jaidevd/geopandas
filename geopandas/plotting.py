@@ -5,42 +5,46 @@ from six import next
 from six.moves import xrange
 
 
-def plot_polygon(ax, poly, facecolor='red', edgecolor='black', alpha=0.5):
+def plot_polygon(ax, poly, facecolor='red', edgecolor='black', alpha=0.5,
+                 edgealpha=1):
     """ Plot a single Polygon geometry """
     from descartes.patch import PolygonPatch
     a = np.asarray(poly.exterior)
     # without Descartes, we could make a Patch of exterior
     ax.add_patch(PolygonPatch(poly, facecolor=facecolor, alpha=alpha))
-    ax.plot(a[:, 0], a[:, 1], color=edgecolor)
+    ax.plot(a[:, 0], a[:, 1], color=edgecolor, alpha=edgealpha)
     for p in poly.interiors:
         x, y = zip(*p.coords)
-        ax.plot(x, y, color=edgecolor)
+        ax.plot(x, y, color=edgecolor, alpha=edgealpha)
 
 
-def plot_multipolygon(ax, geom, facecolor='red', alpha=0.5):
+def plot_multipolygon(ax, geom, facecolor='red', alpha=0.5, edgealpha=1):
     """ Can safely call with either Polygon or Multipolygon geometry
     """
     if geom.type == 'Polygon':
-        plot_polygon(ax, geom, facecolor=facecolor, alpha=alpha)
+        plot_polygon(ax, geom, facecolor=facecolor, alpha=alpha,
+                edgealpha=edgealpha)
     elif geom.type == 'MultiPolygon':
         for poly in geom.geoms:
-            plot_polygon(ax, poly, facecolor=facecolor, alpha=alpha)
+            plot_polygon(ax, poly, facecolor=facecolor,
+                    alpha=alpha,edgealpha=edgealpha)
 
 
-def plot_linestring(ax, geom, color='black', linewidth=1):
+def plot_linestring(ax, geom, color='black', linewidth=1, alpha=1):
     """ Plot a single LineString geometry """
     a = np.array(geom)
-    ax.plot(a[:,0], a[:,1], color=color, linewidth=linewidth)
+    ax.plot(a[:,0], a[:,1], color=color, linewidth=linewidth, alpha=alpha)
 
 
-def plot_multilinestring(ax, geom, color='red', linewidth=1):
+def plot_multilinestring(ax, geom, color='red', linewidth=1, linealpha=1):
     """ Can safely call with either LineString or MultiLineString geometry
     """
     if geom.type == 'LineString':
-        plot_linestring(ax, geom, color=color, linewidth=linewidth)
+        plot_linestring(ax, geom, color=color, linewidth=linewidth, alpha=linealpha)
     elif geom.type == 'MultiLineString':
         for line in geom.geoms:
-            plot_linestring(ax, line, color=color, linewidth=linewidth)
+            plot_linestring(ax, line, color=color, linewidth=linewidth,
+                    alpha=linealpha)
 
 
 def plot_point(ax, pt, marker='o', markersize=2):
@@ -121,7 +125,8 @@ def plot_series(s, colormap='Set1', alpha=0.5, axes=None):
 
 def plot_dataframe(s, column=None, colormap=None, alpha=0.5,
                    categorical=False, legend=False, axes=None, scheme=None,
-                   k=5):
+                   k=5, linealpha=1, edgealpha=1, colorbar=False):
+
     """ Plot a GeoDataFrame
 
         Generate a plot of a GeoDataFrame with matplotlib.  If a
@@ -176,6 +181,7 @@ def plot_dataframe(s, column=None, colormap=None, alpha=0.5,
     from matplotlib.colors import Normalize
     from matplotlib import cm
 
+
     if column is None:
         return plot_series(s.geometry, colormap=colormap, alpha=alpha, axes=axes)
     else:
@@ -201,9 +207,12 @@ def plot_dataframe(s, column=None, colormap=None, alpha=0.5,
             ax = axes
         for geom, value in zip(s.geometry, values):
             if geom.type == 'Polygon' or geom.type == 'MultiPolygon':
-                plot_multipolygon(ax, geom, facecolor=cmap.to_rgba(value), alpha=alpha)
+                plot_multipolygon(ax, geom, facecolor=cmap.to_rgba(value),
+                        alpha=alpha,
+                        edgealpha=edgealpha)
             elif geom.type == 'LineString' or geom.type == 'MultiLineString':
-                plot_multilinestring(ax, geom, color=cmap.to_rgba(value))
+                plot_multilinestring(ax, geom, color=cmap.to_rgba(value),
+                                     linealpha=linealpha)
             # TODO: color point geometries
             elif geom.type == 'Point':
                 plot_point(ax, geom)
